@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.org/MSeal/cython_hunspell.svg?branch=master)](https://travis-ci.org/MSeal/cython_hunspell)
-[![PyPI version shields.io](https://img.shields.io/pypi/v/CyHunspell.svg)](https://pypi.python.org/pypi/CyHunspell/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/CyHunspell.svg)](https://pypi.python.org/pypi/CyHunspell/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # hunspell-hitalent
@@ -22,7 +19,15 @@ For the simplest install simply run:
 
     pip install hunspell-hitalent
 
-This will install the hunspell 1.7.0 C++ bindings on your behalf for your platform.
+The release workflow builds wheels for CPython 3.12–3.14 on Linux (glibc,
+x86-64 and ARM64), macOS (Intel and Apple Silicon), and Windows (x64).
+A source distribution is also available for rebuilding. Source installs require
+a C++ compiler and network access to download Hunspell 1.7.0. Linux and macOS
+also need Autoconf, Automake, Libtool, Gettext, and Make. Windows needs MSVC and uses the
+bundled library for the matching architecture.
+
+The distribution provides the `hunspell` module. Remove `cyhunspell` from
+the same Python environment before installing `hunspell-hitalent`.
 
 ## Dependencies
 

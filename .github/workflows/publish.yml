@@ -1,0 +1,88 @@
+name: Build and publish PyPI package
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Upload the validated artifacts to public PyPI
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: Wheels (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-2022]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install macOS build tools
+        if: runner.os == 'macOS'
+        run: |
+          brew install autoconf automake libtool gettext
+          echo "$(brew --prefix gettext)/bin" >> "$GITHUB_PATH"
+      - uses: pypa/cibuildwheel@v4.3.5
+        env:
+          CIBW_ARCHS: native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.runner }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool autopoint gettext
+          python -m pip install build twine
+      - name: Build and test from source archive
+        run: |
+          python -m build --sdist
+          python -m twine check --strict dist/*
+          python -m pip install dist/*.tar.gz
+          cd "$RUNNER_TEMP"
+          python -c 'from hunspell import Hunspell; assert Hunspell().spell("engineer")'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    if: github.repository == 'HiTalentAlgorithms/cython_hunspell' && github.ref == 'refs/heads/master' && github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: [wheels, sdist]
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/project/hunspell-hitalent/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

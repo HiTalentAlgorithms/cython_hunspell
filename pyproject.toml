@@ -1,3 +1,61 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "Cython>=3.1,<4"]
+requires = ["setuptools>=77", "Cython>=3.1,<4"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "hunspell-hitalent"
+description = "Cython bindings for the Hunspell spelling library"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{name = "Matthew Seal", email = "mseal007@gmail.com"}]
+license-files = ["LICENSE", "HUNSPELL_LICENSE_LESSER"]
+dependencies = ["cacheman>=2.0.6"]
+dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[project.urls]
+Source = "https://github.com/HiTalentAlgorithms/cython_hunspell"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = false
+packages = ["hunspell", "hunspell.dictionaries"]
+
+[tool.setuptools.dynamic]
+version = {attr = "hunspell._version.__version__"}
+
+[tool.setuptools.package-data]
+hunspell = ["*.pyx", "*.pxd", "*.hpp", "*.so.*", "*.dylib", "*.dylib.*"]
+"hunspell.dictionaries" = ["*.aff", "*.dic"]
+
+[tool.cibuildwheel]
+build = "cp31{2,3,4}-*"
+skip = "*-musllinux_*"
+test-requires = ["pytest"]
+test-command = "python -m pytest --import-mode=importlib -q {project}/tests"
+
+[tool.cibuildwheel.linux]
+before-all = """
+if ! command -v autopoint >/dev/null; then
+  if command -v dnf >/dev/null; then
+    dnf install -y gettext-devel
+  elif command -v yum >/dev/null; then
+    yum install -y gettext-devel
+  else
+    apt-get update && apt-get install -y autopoint gettext
+  fi
+fi
+command -v autopoint && command -v autoreconf && command -v automake && command -v libtoolize && command -v make
+"""
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "11.0"

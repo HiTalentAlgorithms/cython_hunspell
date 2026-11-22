@@ -86,7 +86,7 @@ def pkgconfig(**kw):
         kw['runtime_library_dirs'] = [os.path.join('$ORIGIN')]
     if platform.system() == 'Darwin':
         # See https://stackoverflow.com/questions/9795793/shared-library-dependencies-with-distutils
-        kw['extra_link_args'] = ['-Wl,-rpath,"@loader_path/']
+        kw['extra_link_args'] = ['-Wl,-rpath,@loader_path']
     # If changing to a dynamic link dependency
     # if platform.system() == 'Windows':
     #     # See https://stackoverflow.com/questions/62662816/how-do-i-use-the-correct-dll-files-to-enable-3rd-party-c-libraries-in-a-cython-c
@@ -100,10 +100,9 @@ def pkgconfig(**kw):
         kw['include_dirs'] = include_dirs()
 
     if platform.system() == 'Windows':
-        # These should be hardcoded to both architectures
-        kw['libraries'] = ['libhunspell-msvc14-x64', 'libhunspell-msvc14-x86']
+        architecture = 'x64' if sys.maxsize > 2**32 else 'x86'
+        kw['libraries'] = ['libhunspell-msvc14-' + architecture]
         kw['library_dirs'] = [os.path.join(BASE_DIR, 'libs', 'msvc')]
-        kw['extra_link_args'] = ['/NODEFAULTLIB:libucrt.lib ucrt.lib']
     else:
         force_build = os.environ.get('CYHUNSPELL_FORCE_BUILD', False)
         if force_build == '0' or force_build == 0:
